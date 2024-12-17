@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:symphonix/Providers/authProvider.dart';
+import 'package:symphonix/pages/Auth/Login.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -46,7 +47,21 @@ class _ProfilePageState extends State<ProfilePage> {
             SizedBox(
               height: screenHeight * 0.01,
             ),
-            Text('Email: ${authProvider.email}')
+            Text('Email: ${authProvider.email}'),
+            SizedBox(
+              height: screenHeight * 0.03,
+            ),
+            ElevatedButton(
+                onPressed: () async {
+                  await Provider.of<userAuthProvider>(context, listen: false)
+                      .logoutUser();
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LoginPage(),
+                      ));
+                },
+                child: const Text('LogOut'))
           ],
         ),
       ),

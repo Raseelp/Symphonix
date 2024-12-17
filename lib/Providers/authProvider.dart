@@ -89,4 +89,10 @@ class userAuthProvider with ChangeNotifier {
       return e.toString();
     }
   }
+
+  Future<void> logoutUser() async {
+    await FirebaseAuth.instance.signOut();
+
+    notifyListeners();
+  }
 }

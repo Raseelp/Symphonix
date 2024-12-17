@@ -1,11 +1,23 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:symphonix/Providers/authProvider.dart';
 import 'package:symphonix/pages/Auth/Register.dart';
+import 'package:symphonix/pages/ProfilePage.dart';
 
-class LoginPage extends StatelessWidget {
+class LoginPage extends StatefulWidget {
   LoginPage({super.key});
-  final _userNameController = TextEditingController();
+
+  @override
+  State<LoginPage> createState() => _LoginPageState();
+}
+
+class _LoginPageState extends State<LoginPage> {
+  final _emailController = TextEditingController();
+
   final _passwordController = TextEditingController();
+
+  String errorMessage = '';
 
   @override
   Widget build(BuildContext context) {
@@ -23,10 +35,10 @@ class LoginPage extends StatelessWidget {
               height: screenHeight * 0.07,
               width: screenWidth * 0.85,
               child: TextField(
-                controller: _userNameController,
+                controller: _emailController,
                 decoration: const InputDecoration(
                   border: OutlineInputBorder(),
-                  hintText: 'UserName',
+                  hintText: 'Email',
                 ),
               ),
             ),
@@ -70,7 +82,34 @@ class LoginPage extends StatelessWidget {
             SizedBox(
               height: screenHeight * 0.03,
             ),
-            ElevatedButton(onPressed: () {}, child: const Text('SignUp'))
+            ElevatedButton(
+                onPressed: () async {
+                  // Get user input values
+                  String email = _emailController.text;
+                  String password = _passwordController.text;
+
+                  // Call the login function in the AuthProvider
+                  String? result = await Provider.of<userAuthProvider>(context,
+                          listen: false)
+                      .loginUser(
+                    email: email,
+                    password: password,
+                  );
+
+                  if (result == null) {
+                    // Navigate to profile page if login is successful
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ProfilePage(),
+                        ));
+                  } else {
+                    setState(() {
+                      errorMessage = result; // Show error if login fails
+                    });
+                  }
+                },
+                child: const Text('SignUp'))
           ],
         ),
       ),

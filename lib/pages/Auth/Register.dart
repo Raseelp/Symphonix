@@ -1,6 +1,9 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:symphonix/Providers/authProvider.dart';
 import 'package:symphonix/pages/Auth/Login.dart';
+import 'package:symphonix/pages/ProfilePage.dart';
 
 class RegisterPage extends StatelessWidget {
   final _emailController = TextEditingController();
@@ -88,7 +91,31 @@ class RegisterPage extends StatelessWidget {
               height: screenHeight * 0.02,
             ),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () async {
+                final authProvider =
+                    Provider.of<userAuthProvider>(context, listen: false);
+
+                String? error = await authProvider.registerUser(
+                  email: _emailController.text.trim(),
+                  password: _passwordController.text.trim(),
+                  username: _userNameController.text.trim(),
+                );
+
+                if (error == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Registration Successful!")),
+                  );
+                  Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ProfilePage(),
+                      ));
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text("Error: $error")),
+                  );
+                }
+              },
               child: const Text('SignUp'),
             )
           ],

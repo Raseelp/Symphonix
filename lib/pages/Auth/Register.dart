@@ -1,22 +1,38 @@
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:symphonix/pages/Auth/Register.dart';
+import 'package:symphonix/pages/Auth/Login.dart';
 
-class LoginPage extends StatelessWidget {
-  LoginPage({super.key});
+class RegisterPage extends StatelessWidget {
+  final _emailController = TextEditingController();
   final _userNameController = TextEditingController();
   final _passwordController = TextEditingController();
+
+  RegisterPage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Center(child: Text('Login')),
+        title: const Center(child: Text('SignUp')),
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            SizedBox(
+              height: 50,
+              width: 350,
+              child: TextField(
+                controller: _emailController,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'Email',
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 20,
+            ),
             SizedBox(
               height: 50,
               width: 350,
@@ -49,7 +65,7 @@ class LoginPage extends StatelessWidget {
               TextSpan(
                 children: [
                   const TextSpan(
-                    text: 'New User? ',
+                    text: 'Already have an account? ',
                   ),
                   TextSpan(
                       recognizer: TapGestureRecognizer()
@@ -57,10 +73,10 @@ class LoginPage extends StatelessWidget {
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                builder: (context) => RegisterPage(),
+                                builder: (context) => LoginPage(),
                               ));
                         },
-                      text: 'Goto Register',
+                      text: 'Goto Login',
                       style: const TextStyle(color: Colors.blue))
                 ],
               ),

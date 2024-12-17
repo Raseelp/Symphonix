@@ -11,6 +11,8 @@ class RegisterPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
         title: const Center(child: Text('SignUp')),
@@ -20,8 +22,8 @@ class RegisterPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              height: 50,
-              width: 350,
+              height: screenHeight * 0.07,
+              width: screenWidth * 0.85,
               child: TextField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -30,12 +32,12 @@ class RegisterPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(
-              height: 20,
+            SizedBox(
+              height: screenHeight * 0.02,
             ),
             SizedBox(
-              height: 50,
-              width: 350,
+              height: screenHeight * 0.07,
+              width: screenWidth * 0.85,
               child: TextField(
                 controller: _userNameController,
                 decoration: const InputDecoration(
@@ -44,12 +46,12 @@ class RegisterPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(
-              height: 20,
+            SizedBox(
+              height: screenHeight * 0.02,
             ),
             SizedBox(
-              height: 50,
-              width: 350,
+              height: screenHeight * 0.07,
+              width: screenWidth * 0.85,
               child: TextField(
                 controller: _passwordController,
                 decoration: const InputDecoration(
@@ -58,8 +60,8 @@ class RegisterPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(
-              height: 20,
+            SizedBox(
+              height: screenHeight * 0.02,
             ),
             Text.rich(
               TextSpan(
@@ -68,18 +70,26 @@ class RegisterPage extends StatelessWidget {
                     text: 'Already have an account? ',
                   ),
                   TextSpan(
-                      recognizer: TapGestureRecognizer()
-                        ..onTap = () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => LoginPage(),
-                              ));
-                        },
-                      text: 'Goto Login',
-                      style: const TextStyle(color: Colors.blue))
+                    recognizer: TapGestureRecognizer()
+                      ..onTap = () {
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LoginPage(),
+                            ));
+                      },
+                    text: 'Goto Login',
+                    style: const TextStyle(color: Colors.blue),
+                  )
                 ],
               ),
+            ),
+            SizedBox(
+              height: screenHeight * 0.02,
+            ),
+            ElevatedButton(
+              onPressed: () {},
+              child: const Text('SignUp'),
             )
           ],
         ),

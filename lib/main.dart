@@ -1,7 +1,9 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:symphonix/firebase_options.dart';
+import 'package:symphonix/pages/Auth/Login.dart';
 import 'package:symphonix/pages/Auth/Register.dart';
+import 'package:symphonix/pages/ProfilePage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,7 +18,7 @@ class Symphonix extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: RegisterPage(),
+      home: LoginPage(),
     );
   }
 }

@@ -9,6 +9,8 @@ class LoginPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double screenHeight = MediaQuery.of(context).size.height;
+    double screenWidth = MediaQuery.of(context).size.width;
     return Scaffold(
       appBar: AppBar(
         title: const Center(child: Text('Login')),
@@ -18,8 +20,8 @@ class LoginPage extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(
-              height: 50,
-              width: 350,
+              height: screenHeight * 0.07,
+              width: screenWidth * 0.85,
               child: TextField(
                 controller: _userNameController,
                 decoration: const InputDecoration(
@@ -28,12 +30,12 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(
-              height: 20,
+            SizedBox(
+              height: screenHeight * 0.02,
             ),
             SizedBox(
-              height: 50,
-              width: 350,
+              height: screenHeight * 0.07,
+              width: screenWidth * 0.85,
               child: TextField(
                 controller: _passwordController,
                 decoration: const InputDecoration(
@@ -42,8 +44,8 @@ class LoginPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(
-              height: 20,
+            SizedBox(
+              height: screenHeight * 0.03,
             ),
             Text.rich(
               TextSpan(
@@ -64,7 +66,11 @@ class LoginPage extends StatelessWidget {
                       style: const TextStyle(color: Colors.blue))
                 ],
               ),
-            )
+            ),
+            SizedBox(
+              height: screenHeight * 0.03,
+            ),
+            ElevatedButton(onPressed: () {}, child: const Text('SignUp'))
           ],
         ),
       ),

@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:symphonix/Providers/authProvider.dart';
+import 'package:symphonix/Providers/searchProvider.dart';
 import 'package:symphonix/firebase_options.dart';
 import 'package:symphonix/pages/Auth/Login.dart';
 import 'package:symphonix/pages/Auth/Register.dart';
@@ -15,6 +16,9 @@ Future<void> main() async {
   runApp(MultiProvider(providers: [
     ChangeNotifierProvider(
       create: (context) => userAuthProvider(),
+    ),
+    ChangeNotifierProvider(
+      create: (context) => SearchProvider(),
     )
   ], child: const Symphonix()));
 }

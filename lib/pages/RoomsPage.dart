@@ -121,8 +121,14 @@ class _RoomPageState extends State<RoomPage> {
                 const SizedBox(height: 16),
                 ElevatedButton(
                   onPressed: () {
-                    String roomId = roomIdController.text.trim();
-                    // Add join room functionality here
+                    final roomId = roomIdController.text.trim();
+                    if (roomId.isNotEmpty) {
+                      _joinRoom(context, roomId); // Call the join room function
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Room ID cannot be empty!')),
+                      );
+                    }
                   },
                   child: const Text('Join'),
                 ),
@@ -164,6 +170,61 @@ class _RoomPageState extends State<RoomPage> {
       // Handle errors
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to create room: $e')),
+      );
+    }
+  }
+
+  void _joinRoom(BuildContext context, String roomId) async {
+    final currentUserUid = FirebaseAuth.instance.currentUser!.uid;
+    final roomsCollection = FirebaseFirestore.instance.collection('song_rooms');
+
+    try {
+      // Check if the room exists
+      DocumentSnapshot roomDoc = await roomsCollection.doc(roomId).get();
+
+      if (!roomDoc.exists) {
+        // Room does not exist
+        Navigator.pop(context);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Room with ID $roomId does not exist.')),
+        );
+
+        return;
+      }
+
+      // Fetch current members
+      List<dynamic> members = roomDoc.get('members');
+
+      if (members.contains(currentUserUid)) {
+        Navigator.pop(context);
+        // User is already in the room
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('You are already a member of this room.')),
+        );
+
+        return;
+      }
+
+      // Add the user to the members array
+      await roomsCollection.doc(roomId).update({
+        'members': FieldValue.arrayUnion([currentUserUid]),
+      });
+      Navigator.pop(context);
+
+      // Show a success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Joined room $roomId successfully!')),
+      );
+
+      // Close the modal
+      Navigator.pop(context);
+    } catch (e) {
+      // Handle errors
+      Navigator.pop(context);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to join room: $e')),
       );
     }
   }

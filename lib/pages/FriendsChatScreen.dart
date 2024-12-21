@@ -78,7 +78,7 @@ class _FriendChatPageState extends State<FriendChatPage> {
         : Alignment.centerLeft;
     return Container(
       alignment: alignment,
-      child: Text(data['message']),
+      child: SelectableText(data['message']),
     );
   }
 

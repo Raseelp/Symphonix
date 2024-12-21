@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class RoomPage extends StatefulWidget {
   @override
@@ -15,11 +16,58 @@ class _RoomPageState extends State<RoomPage> {
         title: const Text('Rooms'),
         centerTitle: true,
       ),
-      body: const Center(
-        child: Text(
-          'No Rooms Yet',
-          style: TextStyle(fontSize: 18),
-        ),
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: fetchUserRooms(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}'),
+            );
+          }
+
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(
+              child: Text('You are not part of any rooms.'),
+            );
+          }
+
+          final rooms = snapshot.data!;
+
+          return ListView.builder(
+            itemCount: rooms.length,
+            itemBuilder: (context, index) {
+              final room = rooms[index];
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: ListTile(
+                    title: Text('Room ID: ${room['roomId']}'),
+                    subtitle: Text('Leader: ${room['leaderUsername']}'),
+                    trailing: const Icon(Icons.group),
+                    onTap: () {
+                      // Navigate to room details or chat
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Selected Room: ${room['roomId']}'),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showRoomOptions(context),
@@ -79,8 +127,9 @@ class _RoomPageState extends State<RoomPage> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {
-                    _createRoom(context);
+                  onPressed: () async {
+                    String roomId = await _createRoom(context);
+                    showRoomIdBottomSheet(context, roomId);
                   },
                   child: const Text('Create'),
                 ),
@@ -126,7 +175,8 @@ class _RoomPageState extends State<RoomPage> {
                       _joinRoom(context, roomId); // Call the join room function
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Room ID cannot be empty!')),
+                        const SnackBar(
+                            content: Text('Room ID cannot be empty!')),
                       );
                     }
                   },
@@ -140,7 +190,7 @@ class _RoomPageState extends State<RoomPage> {
     );
   }
 
-  void _createRoom(BuildContext context) async {
+  Future<String> _createRoom(BuildContext context) async {
     final currentUserUid = FirebaseAuth.instance.currentUser!.uid;
     final roomsCollection = FirebaseFirestore.instance.collection('song_rooms');
 
@@ -163,14 +213,14 @@ class _RoomPageState extends State<RoomPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Room created! Room ID: ${newRoomDoc.id}')),
       );
-
+      return newRoomDoc.id;
       // Close the modal
-      Navigator.pop(context);
     } catch (e) {
       // Handle errors
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to create room: $e')),
       );
+      return '';
     }
   }
 
@@ -200,7 +250,8 @@ class _RoomPageState extends State<RoomPage> {
         Navigator.pop(context);
         // User is already in the room
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('You are already a member of this room.')),
+          const SnackBar(
+              content: Text('You are already a member of this room.')),
         );
 
         return;
@@ -218,7 +269,6 @@ class _RoomPageState extends State<RoomPage> {
       );
 
       // Close the modal
-      Navigator.pop(context);
     } catch (e) {
       // Handle errors
       Navigator.pop(context);
@@ -227,5 +277,95 @@ class _RoomPageState extends State<RoomPage> {
         SnackBar(content: Text('Failed to join room: $e')),
       );
     }
+  }
+
+  Stream<List<Map<String, dynamic>>> fetchUserRooms() {
+    final currentUserUid = FirebaseAuth.instance.currentUser!.uid;
+    final roomsCollection = FirebaseFirestore.instance.collection('song_rooms');
+    final usersCollection = FirebaseFirestore.instance.collection('users');
+
+    return roomsCollection
+        .where('members',
+            arrayContains: currentUserUid) // Filter by user's membership
+        .snapshots()
+        .asyncMap((querySnapshot) async {
+      List<Map<String, dynamic>> rooms = [];
+
+      for (var doc in querySnapshot.docs) {
+        var roomData = doc.data();
+
+        // Fetch leader's username
+        DocumentSnapshot leaderDoc =
+            await usersCollection.doc(roomData['leader']).get();
+        String leaderUsername =
+            leaderDoc.exists ? leaderDoc['username'] : 'Unknown';
+
+        rooms.add({
+          'roomId': doc.id,
+          'leaderUsername': leaderUsername,
+        });
+      }
+
+      return rooms;
+    });
+  }
+
+  void showRoomIdBottomSheet(BuildContext context, String roomId) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(20),
+        ),
+      ),
+      builder: (BuildContext context) {
+        return Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Room Created Successfully!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Room ID:',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey[600],
+                ),
+              ),
+              const SizedBox(height: 8),
+              SelectableText(
+                roomId,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Clipboard.setData(ClipboardData(text: roomId));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Room ID copied to clipboard!'),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.copy),
+                label: const Text('Copy Room ID'),
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        );
+      },
+    );
   }
 }

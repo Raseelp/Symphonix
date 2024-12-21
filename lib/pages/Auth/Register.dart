@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:symphonix/Providers/authProvider.dart';
 import 'package:symphonix/pages/Auth/Login.dart';
+import 'package:symphonix/pages/HomePage.dart';
 import 'package:symphonix/pages/ProfilePage.dart';
 
 class RegisterPage extends StatelessWidget {
@@ -108,7 +109,7 @@ class RegisterPage extends StatelessWidget {
                   Navigator.pushReplacement(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => ProfilePage(),
+                        builder: (context) => HomePage(),
                       ));
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(

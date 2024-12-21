@@ -7,6 +7,8 @@ import 'package:symphonix/Providers/searchProvider.dart';
 import 'package:symphonix/firebase_options.dart';
 import 'package:symphonix/pages/Auth/Login.dart';
 import 'package:symphonix/pages/Auth/Register.dart';
+import 'package:symphonix/pages/FriendsFeed.dart';
+import 'package:symphonix/pages/HomePage.dart';
 import 'package:symphonix/pages/ProfilePage.dart';
 
 Future<void> main() async {
@@ -50,7 +52,7 @@ class AuthWrapper extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => ProfilePage(),
+            builder: (context) => HomePage(),
           ),
         );
       });

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:symphonix/pages/FriendsChatScreen.dart';
 import 'package:symphonix/widgets/FriendsTile.dart';
 
 class FriednsFeed extends StatelessWidget {
@@ -25,6 +26,7 @@ class FriednsFeed extends StatelessWidget {
         if (friendDoc.exists) {
           friendsList.add({
             'username': friendDoc['username'],
+            'uid': friendDoc['uid'],
           });
         }
       }
@@ -59,8 +61,20 @@ class FriednsFeed extends StatelessWidget {
             itemCount: friends.length,
             itemBuilder: (context, index) {
               final friend = friends[index];
-              return FriendTile(
-                username: friend['username'],
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => FriendChatPage(
+                          reciverUserID: friend['uid'],
+                          reciverUserName: friend['username'],
+                        ),
+                      ));
+                },
+                child: FriendTile(
+                  username: friend['username'],
+                ),
               );
             },
           );

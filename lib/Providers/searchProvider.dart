@@ -7,11 +7,13 @@ class SearchProvider extends ChangeNotifier {
   final FirebaseFirestore _firestore =
       FirebaseFirestore.instance; // Firestore instance
   Future<List<Map<String, dynamic>>> searchUsers(String searchText) async {
+    String currentUserid = _auth.currentUser!.uid;
     try {
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('users')
           .where('username', isGreaterThanOrEqualTo: searchText)
           .where('username', isLessThan: searchText + '\uf8ff')
+          .where(FieldPath.documentId, isNotEqualTo: currentUserid)
           .get();
 
       return querySnapshot.docs

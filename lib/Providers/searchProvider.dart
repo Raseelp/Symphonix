@@ -9,6 +9,13 @@ class SearchProvider extends ChangeNotifier {
   Future<List<Map<String, dynamic>>> searchUsers(String searchText) async {
     String currentUserid = _auth.currentUser!.uid;
     try {
+      // First, get the current user's friends list
+      DocumentSnapshot currentUserDoc =
+          await _firestore.collection('users').doc(currentUserid).get();
+
+      List<dynamic> friendsList =
+          List<String>.from(currentUserDoc['friends'] ?? []);
+
       QuerySnapshot querySnapshot = await FirebaseFirestore.instance
           .collection('users')
           .where('username', isGreaterThanOrEqualTo: searchText)
@@ -16,8 +23,10 @@ class SearchProvider extends ChangeNotifier {
           .where(FieldPath.documentId, isNotEqualTo: currentUserid)
           .get();
 
+      // Filter out users who are already friends
       return querySnapshot.docs
           .map((doc) => doc.data() as Map<String, dynamic>)
+          .where((userData) => !friendsList.contains(userData['uid']))
           .toList();
     } catch (e) {
       print("Error searching users: $e");
@@ -112,6 +121,26 @@ class SearchProvider extends ChangeNotifier {
       print("Friend request declined!");
     } catch (e) {
       print("Error declining friend request: $e");
+    }
+  }
+
+  Future<void> unfriendUser(String friendUid) async {
+    try {
+      String currentUid = _auth.currentUser!.uid;
+
+      // Remove friend from current user's friends list
+      await _firestore.collection('users').doc(currentUid).update({
+        'friends': FieldValue.arrayRemove([friendUid]),
+      });
+
+      // Remove current user from friend's friends list
+      await _firestore.collection('users').doc(friendUid).update({
+        'friends': FieldValue.arrayRemove([currentUid]),
+      });
+
+      print("User unfriended successfully!");
+    } catch (e) {
+      print("Error unfriending user: $e");
     }
   }
 }

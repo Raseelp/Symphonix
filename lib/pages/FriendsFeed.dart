@@ -73,6 +73,7 @@ class FriednsFeed extends StatelessWidget {
                       ));
                 },
                 child: FriendTile(
+                  uid: friend['uid'],
                   username: friend['username'],
                 ),
               );

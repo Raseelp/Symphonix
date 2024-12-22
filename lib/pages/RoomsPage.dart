@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:symphonix/pages/RoomChatPage.dart';
 
 class RoomPage extends StatefulWidget {
   @override
@@ -53,12 +54,18 @@ class _RoomPageState extends State<RoomPage> {
                   child: ListTile(
                     title: Text('Room ID: ${room['roomId']}'),
                     subtitle: Text('Leader: ${room['leaderUsername']}'),
-                    trailing: const Icon(Icons.group),
+                    trailing: IconButton(
+                        onPressed: () {
+                          leaveRoom(room['roomId']);
+                        },
+                        icon: const Icon(Icons.exit_to_app_outlined)),
                     onTap: () {
-                      // Navigate to room details or chat
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Selected Room: ${room['roomId']}'),
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => RoomChatPage(
+                              roomId: room['roomId'],
+                              roomName: room['leaderUsername']),
                         ),
                       );
                     },
@@ -367,5 +374,79 @@ class _RoomPageState extends State<RoomPage> {
         );
       },
     );
+  }
+
+  Future<void> leaveRoom(String roomId) async {
+    try {
+      String currentUserUid = FirebaseAuth.instance.currentUser!.uid;
+
+      // Get the room document
+      DocumentSnapshot roomSnapshot = await FirebaseFirestore.instance
+          .collection('song_rooms')
+          .doc(roomId)
+          .get();
+
+      if (!roomSnapshot.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Room not found!')),
+        );
+        return;
+      }
+
+      Map<String, dynamic> roomData =
+          roomSnapshot.data() as Map<String, dynamic>;
+      List members = roomData['members'];
+      String leader = roomData['leader'];
+
+      if (currentUserUid == leader) {
+        // If the current user is the leader, confirm dismantling the room
+        bool confirm = await showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Dismantle Room'),
+              content: const Text(
+                  'You are the leader of this room. Leaving will dismantle the entire room. Are you sure?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context, false),
+                  child: const Text('Cancel'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(context, true),
+                  child: const Text('Confirm'),
+                ),
+              ],
+            );
+          },
+        );
+
+        if (confirm) {
+          // Dismantle the room
+          await FirebaseFirestore.instance
+              .collection('song_rooms')
+              .doc(roomId)
+              .delete();
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Room dismantled successfully!')),
+          );
+        }
+      } else {
+        // If the current user is a member, remove them from the members array
+        await FirebaseFirestore.instance
+            .collection('song_rooms')
+            .doc(roomId)
+            .update({
+          'members': FieldValue.arrayRemove([currentUserUid]),
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('You have left the room.')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error leaving room: $e')),
+      );
+    }
   }
 }

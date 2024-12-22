@@ -3,25 +3,23 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:symphonix/services/chat_services.dart';
 
-class FriendChatPage extends StatefulWidget {
-  final String reciverUserID;
-  final String reciverUserName;
-  const FriendChatPage(
-      {super.key, required this.reciverUserID, required this.reciverUserName});
+class RoomChatPage extends StatefulWidget {
+  final String roomId;
+  final String roomName;
+  const RoomChatPage({super.key, required this.roomId, required this.roomName});
 
   @override
-  State<FriendChatPage> createState() => _FriendChatPageState();
+  State<RoomChatPage> createState() => _RoomChatPageState();
 }
 
-class _FriendChatPageState extends State<FriendChatPage> {
+class _RoomChatPageState extends State<RoomChatPage> {
   final TextEditingController _messageController = TextEditingController();
   final ChatServices _chatServices = ChatServices();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
-
   void _sendMessage() async {
     if (_messageController.text.isNotEmpty) {
       await _chatServices.sendMessage(
-        reciverId: widget.reciverUserID,
+        roomId: widget.roomId,
         message: _messageController.text,
       );
       _messageController.clear();
@@ -32,7 +30,7 @@ class _FriendChatPageState extends State<FriendChatPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.reciverUserName),
+        title: Text('${widget.roomName}\'s Room'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(8.0),
@@ -87,7 +85,7 @@ class _FriendChatPageState extends State<FriendChatPage> {
   Widget _buildmessageList() {
     return StreamBuilder(
       stream: _chatServices.getMessages(
-        userId: widget.reciverUserID,
+        roomId: widget.roomId,
       ),
       builder: (context, snapshot) {
         if (snapshot.hasError) {

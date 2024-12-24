@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:symphonix/Providers/authProvider.dart';
 import 'package:symphonix/Providers/searchProvider.dart';
 import 'package:symphonix/pages/Auth/Login.dart';
+import 'package:symphonix/services/spotify_services.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -40,6 +41,7 @@ class _ProfilePageState extends State<ProfilePage> {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
     final authProvider = Provider.of<userAuthProvider>(context);
+    final SpotifyAuthService authService = SpotifyAuthService();
 
     return Scaffold(
       appBar: AppBar(
@@ -67,6 +69,38 @@ class _ProfilePageState extends State<ProfilePage> {
                 height: screenHeight * 0.01,
               ),
               Text('Email: ${authProvider.email}'),
+              SizedBox(
+                height: screenHeight * 0.03,
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  try {
+                    await authService.authenticate();
+                    if (mounted) {
+                      // Check if widget is still mounted
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text("Authentication Started")),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Authentication failed: $e")),
+                      );
+                    }
+                  }
+                },
+                child: const Text('Link Spotify'),
+              ),
+              SizedBox(
+                height: screenHeight * 0.03,
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await authService.logout();
+                },
+                child: const Text('Unlink Spotify'),
+              ),
               SizedBox(
                 height: screenHeight * 0.03,
               ),

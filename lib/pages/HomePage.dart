@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:symphonix/pages/FriendsFeed.dart';
 import 'package:symphonix/pages/ProfilePage.dart';
 import 'package:symphonix/pages/RoomsPage.dart';
+import 'package:symphonix/pages/UserStatsPage.dart';
 
 class HomePage extends StatefulWidget {
   HomePage({super.key});
@@ -17,7 +18,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     FriednsFeed(),
     RoomPage(),
-    Center(child: Text('Notifications Page')),
+    UserStatsPage(),
     ProfilePage(),
   ];
 

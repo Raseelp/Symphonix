@@ -22,7 +22,7 @@ class SpotifyAuthService {
         'client_id': clientId,
         'redirect_uri': redirectUri,
         'scope':
-            'user-library-read playlist-read-private', // Add scopes as needed
+            'user-library-read playlist-read-private user-read-recently-played user-read-currently-playing user-library-read playlist-read-private', // Add scopes as needed
         'show_dialog': 'true',
       });
       print('Authentication URL: ${url.toString()}'); // Debug print
@@ -118,19 +118,24 @@ class SpotifyAuthService {
 
       // Make a GET request to Spotify's /me endpoint
       final response = await http.get(
-        Uri.parse('https://api.spotify.com/v1/me'),
+        Uri.parse('https://api.spotify.com/v1/me/player/currently-playing'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
-        // Parse and display the user's profile data
-        final Map<String, dynamic> userData = json.decode(response.body);
-        print('User Profile Data: $userData');
-        print('Display Name: ${userData['display_name']}');
-        print('Email: ${userData['email']}');
-        print('Profile Image: ${userData['images']?.first['url']}');
+        final currentlyPlayingData =
+            json.decode(response.body) as Map<String, dynamic>;
+        if (currentlyPlayingData.isNotEmpty) {
+          final track = currentlyPlayingData['item'];
+          print('Currently Playing Song:');
+          print('Name: ${track['name']}');
+          print(
+              'Artist: ${track['artists']?.map((a) => a['name']).join(', ')}');
+        } else {
+          print('No song is currently playing.');
+        }
       } else {
-        print('Failed to fetch user profile: ${response.body}');
+        print('Failed to fetch currently playing song: ${response.body}');
       }
     } catch (e) {
       print('Error fetching user profile: $e');

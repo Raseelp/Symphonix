@@ -9,7 +9,7 @@ import 'package:http/http.dart' as http;
 class SpotifyAuthService {
   final storage = FlutterSecureStorage();
 
-  // Your Spotify Client ID and Redirect URI
+  //  Spotify Client ID and Redirect URI
   final String clientId = '7c57679c678243258c89d3e2c7317223';
   final String redirectUri = 'symphonix://callback';
 
@@ -22,7 +22,7 @@ class SpotifyAuthService {
         'client_id': clientId,
         'redirect_uri': redirectUri,
         'scope':
-            'user-library-read playlist-read-private user-read-recently-played user-read-currently-playing user-library-read playlist-read-private', // Add scopes as needed
+            'user-library-read playlist-read-private user-read-recently-played user-read-currently-playing user-library-read playlist-read-private user-top-read', // Add scopes as needed
         'show_dialog': 'true',
       });
       print('Authentication URL: ${url.toString()}'); // Debug print
@@ -31,7 +31,7 @@ class SpotifyAuthService {
       final result = await FlutterWebAuth.authenticate(
         url: url.toString(),
         callbackUrlScheme:
-            'symphonix', // Ensure this matches your redirect URI scheme
+            'symphonix', // Ensure this matches  redirect URI scheme
         preferEphemeral: true,
       );
       print('Auth Result: $result'); // Debug pri
@@ -174,7 +174,5 @@ class SpotifyAuthService {
     await storage.delete(key: 'spotify_token_expiration');
 
     print('User logged out successfully and all session data cleared.');
-
-    // Optionally, perform any other cleanup actions, such as navigating to a login screen
   }
 }

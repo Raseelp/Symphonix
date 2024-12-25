@@ -84,61 +84,97 @@ class SpotifyAuthService {
 
     if (response.statusCode == 200) {
       final Map<String, dynamic> responseData = json.decode(response.body);
-      return responseData['access_token']; // Return the token
+      final accessToken = responseData['access_token'];
+      final refreshToken = responseData['refresh_token'];
+      final expiresIn = responseData['expires_in']; // Time in seconds
+
+      // Save tokens and expiration time
+      await storage.write(key: 'spotify_token', value: accessToken);
+      await storage.write(key: 'spotify_refresh_token', value: refreshToken);
+      await storage.write(
+        key: 'spotify_token_expiration',
+        value: DateTime.now()
+            .add(Duration(seconds: expiresIn))
+            .millisecondsSinceEpoch
+            .toString(),
+      );
+
+      return accessToken;
     } else {
       print('Failed to exchange code for token: ${response.body}');
       return null;
     }
   }
 
+  Future<String?> refreshAccessToken() async {
+    const String clientSecret = '821bb2246c9e4e49a835ac77414c2d22';
+    final refreshToken = await storage.read(key: 'spotify_refresh_token');
+    final tokenUrl = Uri.parse('https://accounts.spotify.com/api/token');
+
+    if (refreshToken == null) {
+      print('No refresh token found. User needs to re-authenticate.');
+      return null;
+    }
+
+    final response = await http.post(
+      tokenUrl,
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization':
+            'Basic ' + base64Encode(utf8.encode('$clientId:$clientSecret')),
+      },
+      body: {
+        'grant_type': 'refresh_token',
+        'refresh_token': refreshToken,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = json.decode(response.body);
+      final accessToken = responseData['access_token'];
+      final expiresIn = responseData['expires_in']; // Time in seconds
+
+      // Update token and expiration time
+      await storage.write(key: 'spotify_token', value: accessToken);
+      await storage.write(
+        key: 'spotify_token_expiration',
+        value: DateTime.now()
+            .add(Duration(seconds: expiresIn))
+            .millisecondsSinceEpoch
+            .toString(),
+      );
+
+      return accessToken;
+    } else {
+      print('Failed to refresh token: ${response.body}');
+      return null;
+    }
+  }
+
+  Future<String?> getValidAccessToken() async {
+    final accessToken = await storage.read(key: 'spotify_token');
+    final expirationTime = await storage.read(key: 'spotify_token_expiration');
+
+    if (expirationTime != null &&
+        DateTime.now().millisecondsSinceEpoch > int.parse(expirationTime)) {
+      print('Token expired. Refreshing...');
+      return await refreshAccessToken();
+    }
+
+    return accessToken;
+  }
+
   Future<void> logout() async {
     // Initialize FlutterSecureStorage
     const storage = FlutterSecureStorage();
 
-    // Clear the stored Spotify token
+    // Clear all stored Spotify tokens and related session data
     await storage.delete(key: 'spotify_token');
+    await storage.delete(key: 'spotify_refresh_token');
+    await storage.delete(key: 'spotify_token_expiration');
 
-    // Optionally, reset any other session data or variables as needed
-    print('User logged out successfully');
+    print('User logged out successfully and all session data cleared.');
 
-    // You can also show a snackbar or navigate to the login page
-    // Example:
-    // ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Logged out successfully!')));
-  }
-
-  Future<void> fetchUserProfile() async {
-    try {
-      // Retrieve the stored access token
-      final token = await storage.read(key: 'spotify_token');
-
-      if (token == null) {
-        print('No token found. User is not authenticated.');
-        return;
-      }
-
-      // Make a GET request to Spotify's /me endpoint
-      final response = await http.get(
-        Uri.parse('https://api.spotify.com/v1/me/player/currently-playing'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (response.statusCode == 200) {
-        final currentlyPlayingData =
-            json.decode(response.body) as Map<String, dynamic>;
-        if (currentlyPlayingData.isNotEmpty) {
-          final track = currentlyPlayingData['item'];
-          print('Currently Playing Song:');
-          print('Name: ${track['name']}');
-          print(
-              'Artist: ${track['artists']?.map((a) => a['name']).join(', ')}');
-        } else {
-          print('No song is currently playing.');
-        }
-      } else {
-        print('Failed to fetch currently playing song: ${response.body}');
-      }
-    } catch (e) {
-      print('Error fetching user profile: $e');
-    }
+    // Optionally, perform any other cleanup actions, such as navigating to a login screen
   }
 }

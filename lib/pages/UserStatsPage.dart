@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:symphonix/services/spotify_services.dart';
@@ -22,11 +24,13 @@ class _UserStatsPageState extends State<UserStatsPage> {
   bool isLoading = true;
   String selectedDuration = 'short_term';
   final SpotifyAuthService authService = SpotifyAuthService();
+  final FirebaseAuth _auth = FirebaseAuth.instance; // Firebase Auth instance
 
   @override
   void initState() {
+    String currentUid = _auth.currentUser!.uid;
     super.initState();
-    fetchCurrentlyPlayingSong();
+    fetchCurrentlyPlayingSong(currentUid);
     fetchTopSongs();
     fetchTopArtists();
     fetchRecentlyPlayedSongs();
@@ -36,6 +40,7 @@ class _UserStatsPageState extends State<UserStatsPage> {
   Widget build(BuildContext context) {
     double screenHeight = MediaQuery.of(context).size.height;
     double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(
         title: const Center(child: Text('User Stats')),
@@ -49,7 +54,9 @@ class _UserStatsPageState extends State<UserStatsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Listening Now Section
-                    _buildListeningNowContainer(screenWidth),
+                    _buildListeningNowContainer(
+                      screenWidth,
+                    ),
                     const SizedBox(height: 20),
                     // Top Songs Section
                     _buildTopSongsSection(),
@@ -309,7 +316,7 @@ class _UserStatsPageState extends State<UserStatsPage> {
     );
   }
 
-  Future<void> fetchCurrentlyPlayingSong() async {
+  Future<void> fetchCurrentlyPlayingSong(String currentUid) async {
     try {
       // Retrieve the stored access token
       final token = await storage.read(key: 'spotify_token');
@@ -340,21 +347,61 @@ class _UserStatsPageState extends State<UserStatsPage> {
             albumArtUrl = track['album']['images'][0]['url'];
             isLoading = false;
           });
+
+          // Get the current user's UID (replace with the actual method you use to get the UID)
+          // Replace this with actual user ID retrieval method
+
+          // Save the currently playing song to Firestore
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUid)
+              .update({
+            'currentlyPlaying': {
+              'songName': songName,
+              'artistName': artistName,
+              'albumArtUrl': albumArtUrl,
+            },
+          }).then((_) {
+            print('Currently playing song updated in Firestore');
+          }).catchError((error) {
+            print('Error updating song: $error');
+          });
         } else {
           setState(() {
             isLoading = false;
           });
+          // Set currentlyPlaying to null if no song is playing.
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUid)
+              .update({
+            'currentlyPlaying': null,
+          });
+
           print('No song is currently playing.');
         }
       } else {
         setState(() {
           isLoading = false;
         });
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUid)
+            .update({
+          'currentlyPlaying': null,
+        });
+
         print('Failed to fetch currently playing song: ${response.body}');
       }
     } catch (e) {
       setState(() {
         isLoading = false;
+      });
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUid)
+          .update({
+        'currentlyPlaying': null,
       });
       print('Error fetching currently playing song: $e');
     }

@@ -26,7 +26,7 @@ class _HomePageState extends State<HomePage> {
   final FirebaseAuth _auth = FirebaseAuth.instance; // Firebase Auth instance
   @override
   void initState() {
-    Timer.periodic(Duration(seconds: 30), (timer) {
+    Timer.periodic(Duration(seconds: 10), (timer) {
       String currentUid = _auth.currentUser!.uid;
       fetchCurrentlyPlayingSong(currentUid);
     });

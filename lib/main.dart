@@ -15,14 +15,19 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  runApp(MultiProvider(providers: [
-    ChangeNotifierProvider(
-      create: (context) => userAuthProvider(),
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (context) => userAuthProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => SearchProvider(),
+        )
+      ],
+      child: const Symphonix(),
     ),
-    ChangeNotifierProvider(
-      create: (context) => SearchProvider(),
-    )
-  ], child: const Symphonix()));
+  );
 }
 
 class Symphonix extends StatelessWidget {

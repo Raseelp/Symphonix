@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:symphonix/Providers/songProvider.dart';
 import 'package:symphonix/services/chat_services.dart';
 
 class RoomChatPage extends StatefulWidget {
@@ -46,7 +48,9 @@ class _RoomChatPageState extends State<RoomChatPage> {
       }
       if (roomSnapshot.exists) {
         final roomData = roomSnapshot.data();
-        displaySongDetails(roomData!);
+        Provider.of<SongProvider>(context, listen: false)
+            .updateSongDetails(roomData!);
+        displaySongDetails(roomData);
       } else {
         print('Room not found');
       }
@@ -65,6 +69,10 @@ class _RoomChatPageState extends State<RoomChatPage> {
         padding: const EdgeInsets.all(8.0),
         child: Column(
           children: [
+            buildCurrentSongWidget(),
+            const SizedBox(
+              height: 20,
+            ),
             Expanded(
               child: _buildmessageList(),
             ),
@@ -132,6 +140,70 @@ class _RoomChatPageState extends State<RoomChatPage> {
     );
   }
 
+  Widget buildCurrentSongWidget() {
+    return Consumer<SongProvider>(
+      builder: (context, songProvider, child) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.grey[200],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: [
+              if (songProvider.albumArtUrl.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    songProvider.albumArtUrl,
+                    height: 200,
+                    width: 200,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              const SizedBox(height: 12),
+              Text(
+                songProvider.songName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                songProvider.artistName,
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  songProvider.playbackStatus == 'playing'
+                      ? const Text(
+                          'Playing',
+                          style: TextStyle(color: Colors.green),
+                        )
+                      : const Text('Paused',
+                          style: TextStyle(color: Colors.redAccent)),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${(songProvider.playbackTimestamp / 1000).toStringAsFixed(1)}s',
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void updateCurrentSong(String roomId) async {
     final accessToken = await storage.read(key: 'spotify_token');
     final response = await http.get(
@@ -149,6 +221,7 @@ class _RoomChatPageState extends State<RoomChatPage> {
         'artistName': (data['item']['artists'] as List)
             .map((artist) => artist['name'])
             .join(', '),
+        'albumArtUrl': data['item']['album']['images'][0]['url'] ?? '',
         'songURI': data['item']['uri'],
         'playbackTimestamp': data['progress_ms'],
         'playbackStatus': data['is_playing'] ? 'playing' : 'paused',

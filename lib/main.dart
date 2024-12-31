@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:symphonix/Providers/authProvider.dart';
 import 'package:symphonix/Providers/searchProvider.dart';
+import 'package:symphonix/Providers/songProvider.dart';
 import 'package:symphonix/firebase_options.dart';
 import 'package:symphonix/pages/Auth/Login.dart';
 import 'package:symphonix/pages/Auth/Register.dart';
@@ -23,6 +24,9 @@ Future<void> main() async {
         ),
         ChangeNotifierProvider(
           create: (context) => SearchProvider(),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => SongProvider(),
         )
       ],
       child: const Symphonix(),

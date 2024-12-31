@@ -233,6 +233,22 @@ class _RoomChatPageState extends State<RoomChatPage> {
           .doc(roomId)
           .set(songDetails, SetOptions(merge: true));
     } else {
+      // Set default values when no song is playing or request fails
+      final songDetails = {
+        'songName': 'No song playing',
+        'artistName': '',
+        'albumArtUrl': '',
+        'songURI': '',
+        'playbackTimestamp': 0,
+        'playbackStatus': 'paused',
+        'lastUpdatedAt': FieldValue.serverTimestamp(),
+      };
+
+      await FirebaseFirestore.instance
+          .collection('song_rooms')
+          .doc(roomId)
+          .set(songDetails, SetOptions(merge: true));
+
       print('Failed to fetch currently playing song: ${response.body}');
     }
   }

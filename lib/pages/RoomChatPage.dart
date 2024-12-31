@@ -23,6 +23,7 @@ class _RoomChatPageState extends State<RoomChatPage> {
   final ChatServices _chatServices = ChatServices();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
   final storage = FlutterSecureStorage();
+  Timer? _timer;
 
   void _sendMessage() async {
     if (_messageController.text.isNotEmpty) {
@@ -36,7 +37,7 @@ class _RoomChatPageState extends State<RoomChatPage> {
 
   @override
   void initState() {
-    Timer.periodic(Duration(seconds: 1), (timer) async {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) async {
       final roomSnapshot = await FirebaseFirestore.instance
           .collection('song_rooms')
           .doc(widget.roomId)
@@ -57,6 +58,12 @@ class _RoomChatPageState extends State<RoomChatPage> {
     });
 
     super.initState();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel(); // Cancel the timer when widget is disposed
+    super.dispose();
   }
 
   @override

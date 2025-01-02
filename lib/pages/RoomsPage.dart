@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:symphonix/pages/RoomChatPage.dart';
+import 'package:symphonix/pages/youtubeStreamingPage.dart';
 
 class RoomPage extends StatefulWidget {
   @override
@@ -63,10 +64,19 @@ class _RoomPageState extends State<RoomPage> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => RoomChatPage(
-                              roomId: room['roomId'],
-                              roomName: room['leaderUsername']),
-                        ),
+                            builder: (context) =>
+                                room['selectedService'] == 'Spotify'
+                                    ? RoomChatPage(
+                                        roomId: room['roomId'],
+                                        roomName: room['leaderUsername'],
+                                        selectedStreamingService:
+                                            room['selectedService'],
+                                      )
+                                    : YoutubeStreamingPage(
+                                        roomId: room['roomId'],
+                                        roomName: room['leaderUsername'],
+                                        selectedStreamingService:
+                                            room['selectedService'])),
                       );
                     },
                   ),
@@ -116,32 +126,75 @@ class _RoomPageState extends State<RoomPage> {
   }
 
   void _showCreateRoomBottomSheet(BuildContext context) {
+    String _selectedOption = 'Spotify'; // Default selection
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true, // To adjust for keyboard
       builder: (context) {
         return Padding(
           padding: MediaQuery.of(context).viewInsets, // Adjust for keyboard
-          child: Container(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const Text(
-                  'Create a Room',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) {
+              return Container(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Text(
+                      'Create a Room',
+                      style:
+                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    RadioListTile<String>(
+                      title: const Text('Spotify'),
+                      value: 'Spotify',
+                      groupValue: _selectedOption,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedOption = value!;
+                        });
+                      },
+                    ),
+                    RadioListTile<String>(
+                      title: const Text('YouTube'),
+                      value: 'YouTube',
+                      groupValue: _selectedOption,
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedOption = value!;
+                        });
+                      },
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        String roomId =
+                            await _createRoom(context, _selectedOption);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => _selectedOption == 'Spotify'
+                                  ? RoomChatPage(
+                                      roomId: roomId,
+                                      roomName: roomId,
+                                      selectedStreamingService: _selectedOption,
+                                    )
+                                  : YoutubeStreamingPage(
+                                      roomId: roomId,
+                                      roomName: roomId,
+                                      selectedStreamingService:
+                                          _selectedOption)),
+                        );
+                        showRoomIdBottomSheet(context, roomId);
+                      },
+                      child: const Text('Create'),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () async {
-                    String roomId = await _createRoom(context);
-                    showRoomIdBottomSheet(context, roomId);
-                  },
-                  child: const Text('Create'),
-                ),
-              ],
-            ),
+              );
+            },
           ),
         );
       },
@@ -197,7 +250,9 @@ class _RoomPageState extends State<RoomPage> {
     );
   }
 
-  Future<String> _createRoom(BuildContext context) async {
+  Future<String> _createRoom(
+      BuildContext context, String selectedStreamingService) async {
+    final _selectedStreamingservice = selectedStreamingService;
     final currentUserUid = FirebaseAuth.instance.currentUser!.uid;
     final roomsCollection = FirebaseFirestore.instance.collection('song_rooms');
 
@@ -211,6 +266,7 @@ class _RoomPageState extends State<RoomPage> {
         'leader': currentUserUid,
         'createdAt': FieldValue.serverTimestamp(),
         'roomId': newRoomDoc.id,
+        'selectedService': _selectedStreamingservice
       };
 
       // Create the room in Firestore
@@ -218,7 +274,9 @@ class _RoomPageState extends State<RoomPage> {
 
       // Show a success message
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Room created! Room ID: ${newRoomDoc.id}')),
+        SnackBar(
+            content: Text(
+                'Room created! Room ID: ${newRoomDoc.id}$selectedStreamingService')),
       );
       return newRoomDoc.id;
       // Close the modal
@@ -306,10 +364,12 @@ class _RoomPageState extends State<RoomPage> {
             await usersCollection.doc(roomData['leader']).get();
         String leaderUsername =
             leaderDoc.exists ? leaderDoc['username'] : 'Unknown';
+        String selectedService = roomData['selectedService'];
 
         rooms.add({
           'roomId': doc.id,
           'leaderUsername': leaderUsername,
+          'selectedService': selectedService
         });
       }
 

@@ -13,7 +13,12 @@ import 'package:url_launcher/url_launcher.dart';
 class RoomChatPage extends StatefulWidget {
   final String roomId;
   final String roomName;
-  const RoomChatPage({super.key, required this.roomId, required this.roomName});
+  final String selectedStreamingService;
+  const RoomChatPage(
+      {super.key,
+      required this.roomId,
+      required this.roomName,
+      required this.selectedStreamingService});
 
   @override
   State<RoomChatPage> createState() => _RoomChatPageState();

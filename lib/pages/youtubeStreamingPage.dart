@@ -1,7 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:symphonix/services/chat_services.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class YoutubeStreamingPage extends StatefulWidget {
   final String roomId;
@@ -19,8 +21,28 @@ class YoutubeStreamingPage extends StatefulWidget {
 
 class _YoutubeStreamingPageState extends State<YoutubeStreamingPage> {
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _searchController = TextEditingController();
   final ChatServices _chatServices = ChatServices();
   final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+
+  List<Map<String, dynamic>> _videoSuggestions = [];
+  String? _selectedVideoId;
+
+  final YoutubePlayerController _youtubeController = YoutubePlayerController(
+    initialVideoId: '',
+    flags: const YoutubePlayerFlags(
+      autoPlay: true,
+      mute: false,
+    ),
+  );
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _youtubeController.dispose();
+    super.dispose();
+  }
+
   void _sendMessage() async {
     if (_messageController.text.isNotEmpty) {
       await _chatServices.sendMessage(
@@ -37,19 +59,59 @@ class _YoutubeStreamingPageState extends State<YoutubeStreamingPage> {
       appBar: AppBar(
         title: Text('${widget.roomName}\'s Room'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Column(
-          children: [
-            const SizedBox(
-              height: 20,
+      body: Column(
+        children: [
+          // Search bar
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: _searchController,
+              decoration: const InputDecoration(
+                hintText: 'Search YouTube videos',
+                border: OutlineInputBorder(),
+                suffixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) {
+                if (value.isNotEmpty) _fetchSuggestions(value);
+              },
             ),
+          ),
+          // Suggestions list
+          if (_videoSuggestions.isNotEmpty)
             Expanded(
-              child: _buildmessageList(),
+              child: ListView.builder(
+                itemCount: _videoSuggestions.length,
+                itemBuilder: (context, index) {
+                  final suggestion = _videoSuggestions[index];
+                  return ListTile(
+                    leading: Image.network(suggestion['thumbnail']!),
+                    title: Text(suggestion['title']!),
+                    onTap: () {
+                      _playVideo(suggestion['videoId']!);
+                      setState(() {
+                        _videoSuggestions.clear();
+                      });
+                    },
+                  );
+                },
+              ),
             ),
-            buildMessageInput()
-          ],
-        ),
+          // YouTube Player
+          if (_selectedVideoId != null)
+            YoutubePlayer(
+              controller: _youtubeController,
+              showVideoProgressIndicator: true,
+            ),
+          // Message list and input
+          Expanded(
+            child: Column(
+              children: [
+                Expanded(child: _buildmessageList()),
+                buildMessageInput(),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -109,5 +171,39 @@ class _YoutubeStreamingPageState extends State<YoutubeStreamingPage> {
         );
       },
     );
+  }
+
+  Future<void> _fetchSuggestions(String query) async {
+    try {
+      final Dio dio = Dio();
+      const apiKey =
+          'AIzaSyARszKX1euq6F59FjRqKFJ-2bQUv_t2fzY'; //TODO:restrict it later
+      final url =
+          'https://www.googleapis.com/youtube/v3/search?part=snippet&q=$query&type=video&key=$apiKey';
+      final response = await dio.get(url);
+
+      if (response.statusCode == 200) {
+        final List suggestions = response.data['items'];
+        setState(() {
+          _videoSuggestions = suggestions.map((item) {
+            final snippet = item['snippet'];
+            return {
+              'videoId': item['id']['videoId'],
+              'title': snippet['title'],
+              'thumbnail': snippet['thumbnails']['default']['url'],
+            };
+          }).toList();
+        });
+      }
+    } catch (e) {
+      print('Error fetching suggestions: $e');
+    }
+  }
+
+  void _playVideo(String videoId) {
+    setState(() {
+      _selectedVideoId = videoId;
+      _youtubeController.load(videoId);
+    });
   }
 }

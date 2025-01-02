@@ -31,8 +31,7 @@ class _UserStatsPageState extends State<UserStatsPage> {
   void initState() {
     String currentUid = _auth.currentUser!.uid;
     super.initState();
-    // fetchCurrentlyPlayingSong(currentUid);
-
+    fetchCurrentlyPlayingSong(currentUid);
     fetchTopSongs();
     fetchTopArtists();
     fetchRecentlyPlayedSongs();
@@ -318,96 +317,96 @@ class _UserStatsPageState extends State<UserStatsPage> {
     );
   }
 
-  // Future<void> fetchCurrentlyPlayingSong(String currentUid) async {
-  //   try {
-  //     // Retrieve the stored access token
-  //     final token = await storage.read(key: 'spotify_token');
-  //     if (token == null) {
-  //       setState(() {
-  //         isLoading = false;
-  //       });
-  //       print('No token found. User is not authenticated.');
-  //       return;
-  //     }
+  Future<void> fetchCurrentlyPlayingSong(String currentUid) async {
+    try {
+      // Retrieve the stored access token
+      final token = await storage.read(key: 'spotify_token');
+      if (token == null) {
+        setState(() {
+          isLoading = false;
+        });
+        print('No token found. User is not authenticated.');
+        return;
+      }
 
-  //     // Make a GET request to Spotify's /me/player/currently-playing endpoint
-  //     final response = await http.get(
-  //       Uri.parse('https://api.spotify.com/v1/me/player/currently-playing'),
-  //       headers: {'Authorization': 'Bearer $token'},
-  //     );
+      // Make a GET request to Spotify's /me/player/currently-playing endpoint
+      final response = await http.get(
+        Uri.parse('https://api.spotify.com/v1/me/player/currently-playing'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
 
-  //     if (response.statusCode == 200) {
-  //       final currentlyPlayingData =
-  //           json.decode(response.body) as Map<String, dynamic>;
-  //       if (currentlyPlayingData.isNotEmpty &&
-  //           currentlyPlayingData['item'] != null) {
-  //         final track = currentlyPlayingData['item'];
-  //         setState(() {
-  //           songName = track['name'];
-  //           artistName =
-  //               (track['artists'] as List).map((a) => a['name']).join(', ');
-  //           albumArtUrl = track['album']['images'][0]['url'];
-  //           isLoading = false;
-  //         });
+      if (response.statusCode == 200) {
+        final currentlyPlayingData =
+            json.decode(response.body) as Map<String, dynamic>;
+        if (currentlyPlayingData.isNotEmpty &&
+            currentlyPlayingData['item'] != null) {
+          final track = currentlyPlayingData['item'];
+          setState(() {
+            songName = track['name'];
+            artistName =
+                (track['artists'] as List).map((a) => a['name']).join(', ');
+            albumArtUrl = track['album']['images'][0]['url'];
+            isLoading = false;
+          });
 
-  //         // Get the current user's UID (replace with the actual method you use to get the UID)
-  //         // Replace this with actual user ID retrieval method
+          // Get the current user's UID (replace with the actual method you use to get the UID)
+          // Replace this with actual user ID retrieval method
 
-  //         // Save the currently playing song to Firestore
-  //         FirebaseFirestore.instance
-  //             .collection('users')
-  //             .doc(currentUid)
-  //             .update({
-  //           'currentlyPlaying': {
-  //             'songName': songName,
-  //             'artistName': artistName,
-  //             'albumArtUrl': albumArtUrl,
-  //           },
-  //         }).then((_) {
-  //           print('Currently playing song updated in Firestore');
-  //         }).catchError((error) {
-  //           print('Error updating song: $error');
-  //         });
-  //       } else {
-  //         setState(() {
-  //           isLoading = false;
-  //         });
-  //         // Set currentlyPlaying to null if no song is playing.
-  //         await FirebaseFirestore.instance
-  //             .collection('users')
-  //             .doc(currentUid)
-  //             .update({
-  //           'currentlyPlaying': null,
-  //         });
+          // Save the currently playing song to Firestore
+          FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUid)
+              .update({
+            'currentlyPlaying': {
+              'songName': songName,
+              'artistName': artistName,
+              'albumArtUrl': albumArtUrl,
+            },
+          }).then((_) {
+            print('Currently playing song updated in Firestore');
+          }).catchError((error) {
+            print('Error updating song: $error');
+          });
+        } else {
+          setState(() {
+            isLoading = false;
+          });
+          // Set currentlyPlaying to null if no song is playing.
+          await FirebaseFirestore.instance
+              .collection('users')
+              .doc(currentUid)
+              .update({
+            'currentlyPlaying': null,
+          });
 
-  //         print('No song is currently playing.');
-  //       }
-  //     } else {
-  //       setState(() {
-  //         isLoading = false;
-  //       });
-  //       await FirebaseFirestore.instance
-  //           .collection('users')
-  //           .doc(currentUid)
-  //           .update({
-  //         'currentlyPlaying': null,
-  //       });
+          print('No song is currently playing.');
+        }
+      } else {
+        setState(() {
+          isLoading = false;
+        });
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(currentUid)
+            .update({
+          'currentlyPlaying': null,
+        });
 
-  //       print('Failed to fetch currently playing song: ${response.body}');
-  //     }
-  //   } catch (e) {
-  //     setState(() {
-  //       isLoading = false;
-  //     });
-  //     await FirebaseFirestore.instance
-  //         .collection('users')
-  //         .doc(currentUid)
-  //         .update({
-  //       'currentlyPlaying': null,
-  //     });
-  //     print('Error fetching currently playing song: $e');
-  //   }
-  // }
+        print('Failed to fetch currently playing song: ${response.body}');
+      }
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(currentUid)
+          .update({
+        'currentlyPlaying': null,
+      });
+      print('Error fetching currently playing song: $e');
+    }
+  }
 
   Future<void> fetchTopSongs() async {
     try {

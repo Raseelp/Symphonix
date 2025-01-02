@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:symphonix/Providers/songProvider.dart';
 import 'package:symphonix/services/chat_services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RoomChatPage extends StatefulWidget {
   final String roomId;
@@ -202,6 +203,10 @@ class _RoomChatPageState extends State<RoomChatPage> {
                     '${(songProvider.playbackTimestamp / 1000).toStringAsFixed(1)}s',
                     style: const TextStyle(color: Colors.grey),
                   ),
+                  ElevatedButton(
+                    onPressed: () => syncWithLeader(context, songProvider),
+                    child: const Text('Sync with Leader'),
+                  ),
                 ],
               ),
             ],
@@ -264,5 +269,53 @@ class _RoomChatPageState extends State<RoomChatPage> {
     print('Song: ${roomData['songName']}');
     print('Artist: ${roomData['artistName']}');
     print('Status: ${roomData['playbackStatus']}');
+  }
+
+  void syncWithLeader(BuildContext context, SongProvider songProvider) async {
+    final songURI = songProvider.songURI;
+    final timestamp = (songProvider.playbackTimestamp / 1000).toInt();
+
+    if (songURI.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No song available to sync.')),
+      );
+      return;
+    }
+
+    try {
+      // Create Spotify URI with position parameter
+      final spotifyUri =
+          Uri.parse('$songURI?position_ms=${songProvider.playbackTimestamp}');
+      final canLaunchSpotify = await canLaunchUrl(spotifyUri);
+
+      if (canLaunchSpotify) {
+        await launchUrl(
+          spotifyUri,
+          mode: LaunchMode.externalApplication,
+        );
+      } else {
+        // Fallback to web URL with timestamp
+        final trackId = songURI.split(':').last;
+        final webUrl = Uri.parse(
+            'https://open.spotify.com/track/$trackId?position_ms=${songProvider.playbackTimestamp}');
+
+        if (await canLaunchUrl(webUrl)) {
+          await launchUrl(
+            webUrl,
+            mode: LaunchMode.externalApplication,
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'Could not open Spotify. Please make sure Spotify is installed.')),
+          );
+        }
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error launching Spotify: $e')),
+      );
+    }
   }
 }

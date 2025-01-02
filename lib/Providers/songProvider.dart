@@ -8,11 +8,13 @@ class SongProvider with ChangeNotifier {
   String _albumArtUrl = '';
   String _playbackStatus = '';
   int _playbackTimestamp = 0;
+  String _songURI = '';
 
   String get songName => _songName;
   String get artistName => _artistName;
   String get albumArtUrl => _albumArtUrl;
   String get playbackStatus => _playbackStatus;
+  String get songURI => _songURI;
   int get playbackTimestamp => _playbackTimestamp;
 
   void updateSongDetails(Map<String, dynamic> data) {
@@ -21,6 +23,7 @@ class SongProvider with ChangeNotifier {
     _albumArtUrl = data['albumArtUrl'] ?? '';
     _playbackStatus = data['playbackStatus'] ?? '';
     _playbackTimestamp = data['playbackTimestamp'] ?? 0;
+    _songURI = data['songURI'];
     notifyListeners();
   }
 }

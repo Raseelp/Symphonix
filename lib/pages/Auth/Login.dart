@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:symphonix/Providers/authProvider.dart';
 import 'package:symphonix/pages/Auth/Register.dart';
 import 'package:symphonix/pages/HomePage.dart';
-import 'package:symphonix/pages/ProfilePage.dart';
 
 class LoginPage extends StatefulWidget {
   LoginPage({super.key});

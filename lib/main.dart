@@ -7,10 +7,7 @@ import 'package:symphonix/Providers/searchProvider.dart';
 import 'package:symphonix/Providers/songProvider.dart';
 import 'package:symphonix/firebase_options.dart';
 import 'package:symphonix/pages/Auth/Login.dart';
-import 'package:symphonix/pages/Auth/Register.dart';
-import 'package:symphonix/pages/FriendsFeed.dart';
 import 'package:symphonix/pages/HomePage.dart';
-import 'package:symphonix/pages/ProfilePage.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
